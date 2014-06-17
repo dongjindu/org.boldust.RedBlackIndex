@@ -21,10 +21,14 @@ public class RedBlackBST<Key, Value, KC extends Comparator<Key>> {
     private static final boolean RED   = true;
     private static final boolean BLACK = false;
     private KC kc0;
+    private Boolean ifKeyComparable = false;
             
     private Node root;     // root of the BST
-    public void setKC(KC kc) {
+    public void setComparator(KC kc) {
         this.kc0 = kc;
+    }
+    public void setIfKeyComparable(Boolean b) {
+        ifKeyComparable = b;
     }
 
     // BST helper node data type
@@ -81,7 +85,7 @@ public class RedBlackBST<Key, Value, KC extends Comparator<Key>> {
     // value associated with the given key in subtree rooted at x; null if no such key
     private Value get(Node x, Key key) {
         while (x != null) {
-            int cmp = kc0.compare(key, x.key); //key.compareTo(x.key);
+            int cmp = (!ifKeyComparable) ? kc0.compare(key, x.key): ((Comparable) key).compareTo(x.key);
             if      (cmp < 0) x = x.left;
             else if (cmp > 0) x = x.right;
             else              return x.val;
