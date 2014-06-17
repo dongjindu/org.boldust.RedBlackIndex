@@ -5,7 +5,9 @@ Create index of ArrayList using RedBlack Binary Tree
 
 If you want to do binary search and you don't want to change the order of objects in an ArrayList, how do you want to do? 
 
-This class can help you create an index with the object values like database. You can even create an Comparator and pass to the index.
+This class can help to create an index with the object values like database. A Comparator can be created and pass to the index. If the objects in ArrayList is Comparable, comparator is not required.
+
+Future version plan to support Array as well. This index fits the situation of both unique and non-unique values but not very efficient for the field with few value ranges e.g., genders is only of male, female, and other.
 
 Usage:
 
