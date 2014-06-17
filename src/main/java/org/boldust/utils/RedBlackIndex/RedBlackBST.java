@@ -12,15 +12,20 @@ package org.boldust.utils.RedBlackIndex;
  *        by default.
  *
  *************************************************************************/
+import java.util.Comparator;
 import java.util.NoSuchElementException;
-import org.boldust.utils.RedBlackIndex.Queue;
 import org.apache.log4j.*;
-public class RedBlackBST<Key extends Comparable<Key>, Value> {
+import org.boldust.utils.RedBlackIndex.Queue;
+public class RedBlackBST<Key, Value, KC extends Comparator<Key>> {
 
     private static final boolean RED   = true;
     private static final boolean BLACK = false;
-
+    private KC kc0;
+            
     private Node root;     // root of the BST
+    public void setKC(KC kc) {
+        this.kc0 = kc;
+    }
 
     // BST helper node data type
     private class Node {
@@ -76,7 +81,7 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
     // value associated with the given key in subtree rooted at x; null if no such key
     private Value get(Node x, Key key) {
         while (x != null) {
-            int cmp = key.compareTo(x.key);
+            int cmp = kc0.compare(key, x.key); //key.compareTo(x.key);
             if      (cmp < 0) x = x.left;
             else if (cmp > 0) x = x.right;
             else              return x.val;
@@ -110,7 +115,7 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
     private Node put(Node h, Key key, Value val) { 
         if (h == null) return new Node(key, val, RED, 1);
 
-        int cmp = key.compareTo(h.key);
+        int cmp = kc0.compare(key, h.key); //key.compareTo(h.key);
         if      (cmp < 0) h.left  = put(h.left,  key, val); 
         else if (cmp > 0) h.right = put(h.right, key, val); 
         else              h.val   = val;
@@ -203,7 +208,7 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
     private Node delete(Node h, Key key) { 
         // assert contains(h, key);
 
-        if (key.compareTo(h.key) < 0)  {
+        if (kc0.compare(key, h.key) < 0) { //key.compareTo(h.key) < 0)  {
             if (!isRed(h.left) && !isRed(h.left.left))
                 h = moveRedLeft(h);
             h.left = delete(h.left, key);
@@ -211,11 +216,11 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
         else {
             if (isRed(h.left))
                 h = rotateRight(h);
-            if (key.compareTo(h.key) == 0 && (h.right == null))
+            if (kc0.compare(key, h.key) == 0 && (h.right == null))
                 return null;
             if (!isRed(h.right) && !isRed(h.right.left))
                 h = moveRedRight(h);
-            if (key.compareTo(h.key) == 0) {
+            if (kc0.compare(key, h.key) == 0) {
                 Node x = min(h.right);
                 h.key = x.key;
                 h.val = x.val;
@@ -359,7 +364,7 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
     // the largest key in the subtree rooted at x less than or equal to the given key
     private Node floor(Node x, Key key) {
         if (x == null) return null;
-        int cmp = key.compareTo(x.key);
+        int cmp = kc0.compare(key, x.key); //key.compareTo(x.key);
         if (cmp == 0) return x;
         if (cmp < 0)  return floor(x.left, key);
         Node t = floor(x.right, key);
@@ -377,7 +382,7 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
     // the smallest key in the subtree rooted at x greater than or equal to the given key
     private Node ceiling(Node x, Key key) {  
         if (x == null) return null;
-        int cmp = key.compareTo(x.key);
+        int cmp = kc0.compare(key, x.key); //key.compareTo(x.key);
         if (cmp == 0) return x;
         if (cmp > 0)  return ceiling(x.right, key);
         Node t = ceiling(x.left, key);
@@ -411,7 +416,7 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
     // number of keys less than key in the subtree rooted at x
     private int rank(Key key, Node x) {
         if (x == null) return 0; 
-        int cmp = key.compareTo(x.key); 
+        int cmp = kc0.compare(key, x.key); //key.compareTo(x.key); 
         if      (cmp < 0) return rank(key, x.left); 
         else if (cmp > 0) return 1 + size(x.left) + rank(key, x.right); 
         else              return size(x.left); 
@@ -438,8 +443,8 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
     // to the queue
     private void keys(Node x, Queue<Key> queue, Key lo, Key hi) { 
         if (x == null) return; 
-        int cmplo = lo.compareTo(x.key); 
-        int cmphi = hi.compareTo(x.key); 
+        int cmplo = kc0.compare(lo, x.key); //lo.compareTo(x.key); 
+        int cmphi = kc0.compare(hi, x.key); //hi.compareTo(x.key); 
         if (cmplo < 0) keys(x.left, queue, lo, hi); 
         if (cmplo <= 0 && cmphi >= 0) queue.enqueue(x.key); 
         if (cmphi > 0) keys(x.right, queue, lo, hi); 
@@ -447,7 +452,7 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
 
     // number keys between lo and hi
     public int size(Key lo, Key hi) {
-        if (lo.compareTo(hi) > 0) return 0;
+        if (kc0.compare(lo, hi) > 0) return 0;
         if (contains(hi)) return rank(hi) - rank(lo) + 1;
         else              return rank(hi) - rank(lo);
     }
@@ -477,8 +482,8 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
     // Credit: Bob Dondero's elegant solution
     private boolean isBST(Node x, Key min, Key max) {
         if (x == null) return true;
-        if (min != null && x.key.compareTo(min) <= 0) return false;
-        if (max != null && x.key.compareTo(max) >= 0) return false;
+        if (min != null && kc0.compare(x.key, min) <= 0) return false;
+        if (max != null && kc0.compare(x.key, max) >= 0) return false;
         return isBST(x.left, min, x.key) && isBST(x.right, x.key, max);
     } 
 
@@ -495,7 +500,7 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
         for (int i = 0; i < size(); i++)
             if (i != rank(select(i))) return false;
         for (Key key : keys())
-            if (key.compareTo(select(rank(key))) != 0) return false;
+            if (kc0.compare(key, select(rank(key))) != 0) return false;
         return true;
     }
 
